@@ -133,6 +133,35 @@ public:
             printf("SQLGetData - columns must be retrieved after last bound one\n");
     }
 
+    void print_results()
+    {
+        SQLSMALLINT columns;
+        SQLRETURN ret;
+        int row(0);
+
+        /* Retrieve a list of tables */
+        SQLTables(mStmtHandle, NULL, 0, NULL, 0, NULL, 0, (SQLCHAR*)"TABLE", SQL_NTS);
+        /* How many columns are there */
+        SQLNumResultCols(mStmtHandle, &columns);
+        /* Loop through the rows in the result-set */
+        while (SQL_SUCCEEDED(ret = SQLFetch(mStmtHandle))) {
+            SQLUSMALLINT i;
+            printf("Row %d\n", row++);
+            /* Loop through the columns */
+            for (i = 1; i <= columns; i++) {
+                SQLLEN indicator;
+                char buf[512];
+                /* retrieve column data as a string */
+                ret = SQLGetData(mStmtHandle, i, SQL_C_CHAR, buf, sizeof(buf), &indicator);
+                if (SQL_SUCCEEDED(ret)) {
+                    /* Handle null columns */
+                    if (indicator == SQL_NULL_DATA) strcpy(buf, "NULL");
+                    printf("  Column %u : %s\n", i, buf);
+                }
+            }
+        }
+    }
+
 private:
     SQLHDBC     mConHandle;
     SQLHENV     mEnvHandle;
@@ -151,6 +180,7 @@ int main()
         if (0 == dbManager.connect())
         {
             dbManager.print_driver_info();
+            dbManager.print_results();
             //SQLCHAR SQLStmt[256] = { 0 };
             ///*string SQLStr = "SELECT * FROM SYSTEM.TEST_TABLE1";
             //snprintf((char *)SQLStmt, SQLStr.length(), SQLStr.c_str());*/

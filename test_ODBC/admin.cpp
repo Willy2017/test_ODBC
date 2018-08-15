@@ -3,6 +3,7 @@
 #include <sqltypes.h>
 #include <sqlext.h>
 #include <string>
+#include <sstream>
 
 #pragma warning(disable: 4996)
 
@@ -11,6 +12,7 @@ const char* UserName = "SYSTEM";
 const char* Password = "Aa314520";
 
 using std::string;
+using std::stringstream;
 
 class DBManager
 {
@@ -162,6 +164,25 @@ public:
         }
     }
 
+    inline void testSQL(const string& sqlstr)
+    {
+        SQLCHAR SQLStmt[256] = { 0 };
+        //SQLRETURN ret;
+
+        //strcpy((char *)SQLStmt, sqlstr.c_str());
+
+        SQLPrepare(mStmtHandle, (SQLCHAR*)sqlstr.c_str(), SQL_NTS);
+        SQLExecute(mStmtHandle);
+        //ret = SQLExecDirect(mStmtHandle, SQLStmt, SQL_NTS);
+        //if (SQL_SUCCESS == ret)
+        //{
+        //    if (SQL_SUCCESS == SQLFetch(mStmtHandle))
+        //    {
+        //        //printf("Exec SQL \"%s\" succesfully!\n", sqlstr.c_str());
+        //    }
+        //}
+    }
+
 private:
     SQLHDBC     mConHandle;
     SQLHENV     mEnvHandle;
@@ -179,8 +200,15 @@ int main()
     {
         if (0 == dbManager.connect())
         {
-            dbManager.print_driver_info();
-            dbManager.print_results();
+            for (int i = 1; i <= 100000; ++i)
+            {
+                stringstream ss;
+                ss << "INSERT into SYSTEM.TEST_TABLE1 VALUES(" << i << ",'" <<i <<"'," << "'"<< i <<"');";
+                dbManager.testSQL(ss.str().c_str());
+            }
+            //dbManager.testSQL("INSERT into SYSTEM.TEST_TABLE1 VALUES(10,'J','J12345');");
+            //dbManager.print_driver_info();
+            //dbManager.print_results();
             //SQLCHAR SQLStmt[256] = { 0 };
             ///*string SQLStr = "SELECT * FROM SYSTEM.TEST_TABLE1";
             //snprintf((char *)SQLStmt, SQLStr.length(), SQLStr.c_str());*/

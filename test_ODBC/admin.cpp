@@ -4,6 +4,7 @@
 #include <sqlext.h>
 #include <string>
 #include <sstream>
+#include <ctime>
 
 #pragma warning(disable: 4996)
 
@@ -194,43 +195,33 @@ private:
 
 int main()
 {
-    DBManager dbManager("HanaDB", "SYSTEM", "Aa314520");
+    DBManager dbManager("Local_HanaDB", "system", "Aa314520");
+    //DBManager dbManager("Local_MySQLDB", "system", "1qaz@WSX3edc");
+    //DBManager dbManager("Remote_MySQL_DB", "system", "1qaz@WSX3edc");
+    //DBManager dbManager("Remote_HANADB", "system", "1qaz@WSX3edc"); // remote hana server
 
     if (0 == dbManager.open())
     {
         if (0 == dbManager.connect())
         {
-            for (int i = 1; i <= 100000; ++i)
+            std::clock_t start;
+            double duration;
+            start = std::clock();
+
+            int count(100000);
+            for (int i = 1; i <= count; ++i)
             {
                 stringstream ss;
-                ss << "INSERT into SYSTEM.TEST_TABLE1 VALUES(" << i << ",'" <<i <<"'," << "'"<< i <<"');";
+                ss << "INSERT into system.TEST_TABLE1 VALUES(" << i << ",'" <<i <<"'," << "'"<< i <<"');";
                 dbManager.testSQL(ss.str().c_str());
             }
-            //dbManager.testSQL("INSERT into SYSTEM.TEST_TABLE1 VALUES(10,'J','J12345');");
-            //dbManager.print_driver_info();
-            //dbManager.print_results();
-            //SQLCHAR SQLStmt[256] = { 0 };
-            ///*string SQLStr = "SELECT * FROM SYSTEM.TEST_TABLE1";
-            //snprintf((char *)SQLStmt, SQLStr.length(), SQLStr.c_str());*/
+            duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
-            //strcpy((char *)SQLStmt, "SELECT * FROM SYSTEM.TEST_TABLE1");
-
-            //rc = SQLExecDirect(StmtHandle, SQLStmt, SQL_NTS);
-            //if (SQL_SUCCESS == rc)
-            //{
-            //    if (SQL_SUCCESS == SQLFetch(StmtHandle))
-            //    {
-            //        printf("Hello world!\n");
-            //    }
-            //}
-
-            //rc = SQLDisconnect(ConHandle);
-
-            
+            printf("After %d insert SQL to local HANA DB, duration: %lf \n", count, duration);            
         }
     }
 
-
+    system("pause");
     // Return To The Operating System
     return 0;
 }

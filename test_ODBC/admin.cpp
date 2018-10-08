@@ -8,12 +8,15 @@
 
 #pragma warning(disable: 4996)
 
-const char* DSN      = "HanaDB";
-const char* UserName = "SYSTEM";
-const char* Password = "Aa314520";
-
 using std::string;
 using std::stringstream;
+
+struct record
+{
+    unsigned int id;
+    const char* name;
+    const char* description;
+};
 
 class DBManager
 {
@@ -165,15 +168,17 @@ public:
         }
     }
 
-    inline void testSQL(const string& sqlstr)
+    void _execSQL(const string& sqlstr)
     {
         SQLCHAR SQLStmt[256] = { 0 };
+
+        SQLPrepare(mStmtHandle, (SQLCHAR*)sqlstr.c_str(), SQL_NTS);
+        SQLExecute(mStmtHandle);
+
         //SQLRETURN ret;
 
         //strcpy((char *)SQLStmt, sqlstr.c_str());
 
-        SQLPrepare(mStmtHandle, (SQLCHAR*)sqlstr.c_str(), SQL_NTS);
-        SQLExecute(mStmtHandle);
         //ret = SQLExecDirect(mStmtHandle, SQLStmt, SQL_NTS);
         //if (SQL_SUCCESS == ret)
         //{
@@ -184,6 +189,8 @@ public:
         //}
     }
 
+    void insertRecord(const struct record& r);
+
 private:
     SQLHDBC     mConHandle;
     SQLHENV     mEnvHandle;
@@ -193,12 +200,21 @@ private:
     string      mPassword;
 };
 
+
+inline void
+DBManager::insertRecord(const struct record& r)
+{
+    stringstream ss;
+    ss << "INSERT into system.TEST_TABLE1 VALUES(" << r.id << ",'" << r.name << "'," << "'" << r.description << "');";
+    this->_execSQL(ss.str());
+}
+
 int main()
 {
-    DBManager dbManager("Local_HanaDB", "system", "Aa314520");
-    //DBManager dbManager("Local_MySQLDB", "system", "1qaz@WSX3edc");
+    //DBManager dbManager("Local_Hana_DB", "system", "Aa314520");
+    //DBManager dbManager("Local_MySQL_DB", "system", "1qaz@WSX3edc");
     //DBManager dbManager("Remote_MySQL_DB", "system", "1qaz@WSX3edc");
-    //DBManager dbManager("Remote_HANADB", "system", "1qaz@WSX3edc"); // remote hana server
+    DBManager dbManager("Remote_HANA_DB", "system", "1qaz@WSX3edc"); // remote hana server
 
     if (0 == dbManager.open())
     {
@@ -208,16 +224,23 @@ int main()
             double duration;
             start = std::clock();
 
-            int count(100000);
+            int count(100);
             for (int i = 1; i <= count; ++i)
             {
-                stringstream ss;
-                ss << "INSERT into system.TEST_TABLE1 VALUES(" << i << ",'" <<i <<"'," << "'"<< i <<"');";
-                dbManager.testSQL(ss.str().c_str());
+                struct record r;
+                r.id = i;
+                r.name = "test";
+                r.description = "YES!";
+                dbManager.insertRecord(r);
             }
-            duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+            //stringstream ss;
+            //ss << "DELETE from test.TEST_TABLE1 where id < " << count << ";";
+            //dbManager.testSQL(ss.str());
 
-            printf("After %d insert SQL to local HANA DB, duration: %lf \n", count, duration);            
+            duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+            /*printf("After delete SQL to local MySQL DB, duration: %lf \n", duration);*/
+
+            printf("After %d insert SQL to local HANA DB, duration: %lf \n", count, duration);
         }
     }
 
